@@ -8,3 +8,8 @@ Running command.sh for every message as they become available in queue1 passing 
 ```Bash
 dequeue queue1 command.sh
 ```
+
+Enqueue basic message into queue2
+```Bash
+echo "Awesome" | enqueue queue2
+```
