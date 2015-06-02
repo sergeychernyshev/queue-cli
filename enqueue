@@ -1,0 +1,54 @@
+#!/usr/bin/python
+import boto.sqs
+import sys
+import subprocess 
+import ConfigParser
+import getopt 
+
+options, arguments = getopt.getopt(sys.argv[1:], 'vc:')
+
+# Check if we got one (non-option) argument, queue name
+if len(arguments) != 1:
+    sys.stderr.write("Usage: enqueue [-v] <queue-name> < file\n")
+    sys.exit(2)
+
+# System-wide configuration file
+config_file = '/etc/queue-cli/queue-cli.conf';
+
+# Reading options (well, just verbose option)
+verbose = False
+for o, a in options:
+    if o == "-v":
+        verbose = True
+    elif o =="-c":
+        config_file = a
+
+# Read configuration files to see if 
+from ConfigParser import SafeConfigParser
+parser = SafeConfigParser()
+parser.read(config_file)
+
+try:
+    config_pairs = parser.items(arguments[0])
+except ConfigParser.NoSectionError:
+    sys.stderr.write("No such queue defined: " + arguments[0] + "\n")
+    sys.exit(1)
+
+# Send log messaged to STDERR if -v was passed
+def log(message):
+    if (verbose):
+        sys.stderr.write(message + "\n")
+    
+config = {}
+for name, value in config_pairs:
+    config[name] = value
+
+# Retrieve one message
+# AWS-specific code, will subclass in the future
+conn = boto.sqs.connect_to_region(config["region"])
+queue = conn.get_queue(config["queue"])
+
+from boto.sqs.message import RawMessage
+m = RawMessage()
+m.set_body(sys.stdin.read())
+queue.write(m)
