@@ -4,9 +4,14 @@ Goal of the project is to make it so command line scripts can run queued jobs as
 
 ## Proposed syntax
 
-Running command.sh for every message as they become available in queue1 passing content of the message to the script through STDIN
+Running command.sh one message in queue1 passing content of the message to the script through STDIN
 ```Bash
 dequeue queue1 command.sh
+```
+
+Running command.sh for every message (daemonized) as they become available in queue1 passing content of the message to the script through STDIN
+```Bash
+dequeue -d queue1 command.sh
 ```
 
 Enqueue basic message into queue2
