@@ -1,4 +1,3 @@
-from abc import ABCMeta, abstractmethod
 import queue
 import boto.sqs
 
