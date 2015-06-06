@@ -34,11 +34,6 @@ except ConfigParser.NoSectionError:
     sys.stderr.write("No such queue defined: " + arguments[0] + "\n")
     sys.exit(1)
 
-# Send log messaged to STDERR if -v was passed
-def log(message):
-    if (verbose):
-        sys.stderr.write(message + "\n")
-    
 config = {}
 for name, value in config_pairs:
     config[name] = value
