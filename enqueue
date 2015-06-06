@@ -23,19 +23,5 @@ for o, a in options:
     elif o =="-c":
         config_file = a
 
-# Read configuration files to see if 
-from ConfigParser import SafeConfigParser
-parser = SafeConfigParser()
-parser.read(config_file)
-
-try:
-    config_pairs = parser.items(arguments[0])
-except ConfigParser.NoSectionError:
-    sys.stderr.write("No such queue defined: " + arguments[0] + "\n")
-    sys.exit(1)
-
-config = {}
-for name, value in config_pairs:
-    config[name] = value
-
-queue.SQS(config).enqueue(sys.stdin.read())
+queue_instance = queue.get(config_file, arguments[0])
+queue_instance.enqueue(sys.stdin.read())

@@ -1,9 +1,6 @@
 from abc import ABCMeta, abstractmethod
-import boto.sqs
 import sys
-import subprocess 
 import ConfigParser
-import getopt 
 
 # Generic class representing a queue, to be subclassed by specific implementations
 class Queue(object):
@@ -53,37 +50,21 @@ class Message(object):
 	def delete(self):
 		self.queue.delete_message(self)
 
-# This class represents Amazon Web Services SQS queue
-class SQS(Queue):
-	def __init__(self, config):
-		super(SQS, self).__init__(config)
-		self.aws_conn = boto.sqs.connect_to_region(self.config["region"])
-		self.aws_queue = self.aws_conn.get_queue(self.config["queue"])
+def get(config_file, queue_name):
+	# Read configuration files to see if
+	from ConfigParser import SafeConfigParser
+	parser = SafeConfigParser()
+	parser.read(config_file)
 
-	# enqueues a message into a queue
-	def enqueue(self, message_body):
-		aws_message = boto.sqs.message.RawMessage()
-		aws_message.set_body(message_body)
-		self.aws_queue.write(aws_message)
+	try:
+	    config_pairs = parser.items(queue_name)
+	except ConfigParser.NoSectionError:
+	    sys.stderr.write("No such queue defined: " + queue_name + "\n")
+	    sys.exit(1)
 
-	# dequeues one message from a queue and returns message object
-	def dequeue(self):
-		aws_messages = self.aws_queue.get_messages(1)
-		if (len(aws_messages) == 0):
-			return None
+	config = {}
+	for name, value in config_pairs:
+	    config[name] = value
 
-		return SQSMessage(self, aws_messages[0])
-
-	def release_message(self, message):
-		message.aws_message.change_visibility(0)
-
-	def delete_message(self, message):
-		self.aws_queue.delete_message(message.aws_message)	
-
-class SQSMessage(Message):
-	def __init__(self, queue, aws_message):
-		super(SQSMessage, self).__init__(queue)
-		self.aws_message = aws_message
-
-	def __repr__(self):
-		return self.aws_message.get_body()
+	module = __import__(config["type"])
+	return getattr(module, 'Queue')(config)
