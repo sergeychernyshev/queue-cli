@@ -1,9 +1,9 @@
 #!/usr/bin/python
-import boto.sqs
 import sys
 import subprocess 
 import ConfigParser
 import getopt 
+import queue
 
 options, arguments = getopt.getopt(sys.argv[1:], 'vc:')
 
@@ -35,41 +35,34 @@ except ConfigParser.NoSectionError:
     sys.exit(1)
 
 # Send log messaged to STDERR if -v was passed
-def log(message):
+def log(log_message):
     if (verbose):
-        sys.stderr.write(message + "\n")
+        sys.stderr.write(log_message + "\n")
     
 config = {}
 for name, value in config_pairs:
     config[name] = value
 
-# Retrieve one message
-# AWS-specific code, will subclass in the future
-conn = boto.sqs.connect_to_region(config["region"])
-queue = conn.get_queue(config["queue"])
+message = queue.SQS(config).dequeue()
 
-messages = queue.get_messages(1)
-if (len(messages) == 0):
+if (message is None):
     log("No messages in the queue")
     sys.exit(0)
 
-message = messages[0]
-message_body = messages[0].get_body()
-
-# Executing command with message_body passed into STDIN
 command = arguments[1:]
 
 log("Executing: " + " ".join(command) + " passing message into STDIN")
 
+# send textual representation of the message over to STDIN of the process
 proc = subprocess.Popen(command, stdin=subprocess.PIPE)
-proc.communicate(message_body)
+proc.communicate(str(message))
 exitcode = proc.returncode
 
 if (exitcode > 0):
     log("Command exit code: " + str(exitcode))
     log("Returning message back to the queue and exiting with same code")
-    message.change_visibility(0)
+    message.release()
     exit(exitcode)
 
 log("Command executed successfully, deleting message from the queue")
-queue.delete_message(message)
+message.delete()

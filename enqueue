@@ -1,9 +1,9 @@
 #!/usr/bin/python
-import boto.sqs
 import sys
 import subprocess 
 import ConfigParser
-import getopt 
+import getopt
+import queue
 
 options, arguments = getopt.getopt(sys.argv[1:], 'vc:')
 
@@ -43,12 +43,4 @@ config = {}
 for name, value in config_pairs:
     config[name] = value
 
-# Retrieve one message
-# AWS-specific code, will subclass in the future
-conn = boto.sqs.connect_to_region(config["region"])
-queue = conn.get_queue(config["queue"])
-
-from boto.sqs.message import RawMessage
-m = RawMessage()
-m.set_body(sys.stdin.read())
-queue.write(m)
+queue.SQS(config).enqueue(sys.stdin.read())
