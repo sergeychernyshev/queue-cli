@@ -4,8 +4,9 @@ import subprocess
 import ConfigParser
 import getopt 
 import queue
+import time
 
-options, arguments = getopt.getopt(sys.argv[1:], 'vc:')
+options, arguments = getopt.getopt(sys.argv[1:], 'vc:s::')
 
 # Check if we got at least two (non-option) arguments, queue name and command
 if len(arguments) < 2:
@@ -15,13 +16,18 @@ if len(arguments) < 2:
 # System-wide configuration file
 config_file = '/etc/queue-cli/queue-cli.conf';
 
-# Reading options (well, just verbose option)
+# How many seconds to sleep when there are no messages in the queue (default = 0, is not to sleep)
+sleep_when_no_messages = 0;
+
+# Reading options
 verbose = False
 for o, a in options:
     if o == "-v":
         verbose = True
     elif o =="-c":
         config_file = a
+    elif o =="-s":
+        sleep_when_no_messages = int(a)
 
 # Send log messaged to STDERR if -v was passed
 def log(log_message):
@@ -33,6 +39,9 @@ message = queue_instance.dequeue()
 
 if (message is None):
     log("No messages in the queue")
+    if (sleep_when_no_messages > 0):
+        log("Sleeping for " + str(sleep_when_no_messages) + " seconds before exisitng")
+        time.sleep(sleep_when_no_messages)
     sys.exit(0)
 
 command = arguments[1:]
