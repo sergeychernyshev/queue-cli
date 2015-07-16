@@ -7,12 +7,6 @@ import queue
 import time
 
 options, arguments = getopt.getopt(sys.argv[1:], 'vc:s:n:')
-
-# Check if we got at least two (non-option) arguments, queue name and command
-if len(arguments) < 2:
-    sys.stderr.write("Usage: dequeue [-v] <queue-name> <command> ...\n")
-    sys.exit(2)
-
 # System-wide configuration file
 config_file = '/etc/queue-cli/queue-cli.conf'
 
@@ -26,6 +20,8 @@ verbose = False
 check_for_n_messages = False
 number_of_messages_to_check_for = 0
 
+# Arguments required
+arguments_required = 2
 for o, a in options:
     if o == "-v":
         verbose = True
@@ -36,6 +32,12 @@ for o, a in options:
     elif o == "-n":
 	check_for_n_messages = True
         number_of_messages_to_check_for = int(a)
+        arguments_required = 1
+
+# Check if we got at least two (non-option) arguments, queue name and command
+if len(arguments) < arguments_required:
+    sys.stderr.write("Usage: dequeue [-v] <queue-name> [command] ...\n")
+    sys.exit(2)
 
 # Send log messaged to STDERR if -v was passed
 def log(log_message):
@@ -48,7 +50,10 @@ if (check_for_n_messages):
     log("Checking if there are " + str(number_of_messages_to_check_for) + " messages in the queue")
     stats = queue_instance.stats()
     log("There are " + str(stats['num']) + " messages in the queue and " + str(stats['in_flight']) + " messages in flight")
-    sys.exit(stats['num'] + stats['in_flight'] - number_of_messages_to_check_for)
+    if (stats['num'] + stats['in_flight'] == number_of_messages_to_check_for):
+        sys.exit(0)
+    else:
+        sys.exit(3)
 
 message = queue_instance.dequeue()
 
