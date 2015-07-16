@@ -6,7 +6,7 @@ import getopt
 import queue
 import time
 
-options, arguments = getopt.getopt(sys.argv[1:], 'vc:s::')
+options, arguments = getopt.getopt(sys.argv[1:], 'vc:s:n:')
 
 # Check if we got at least two (non-option) arguments, queue name and command
 if len(arguments) < 2:
@@ -14,20 +14,28 @@ if len(arguments) < 2:
     sys.exit(2)
 
 # System-wide configuration file
-config_file = '/etc/queue-cli/queue-cli.conf';
+config_file = '/etc/queue-cli/queue-cli.conf'
 
 # How many seconds to sleep when there are no messages in the queue (default = 0, is not to sleep)
-sleep_when_no_messages = 0;
+sleep_when_no_messages = 0
 
 # Reading options
 verbose = False
+
+# Check if queue has a number of visible and in-flight messages and exit with success if so
+check_for_n_messages = False
+number_of_messages_to_check_for = 0
+
 for o, a in options:
     if o == "-v":
         verbose = True
-    elif o =="-c":
+    elif o == "-c":
         config_file = a
-    elif o =="-s":
+    elif o == "-s":
         sleep_when_no_messages = int(a)
+    elif o == "-n":
+	check_for_n_messages = True
+        number_of_messages_to_check_for = int(a)
 
 # Send log messaged to STDERR if -v was passed
 def log(log_message):
@@ -35,6 +43,13 @@ def log(log_message):
         sys.stderr.write(log_message + "\n")
 
 queue_instance = queue.get(config_file, arguments[0])
+
+if (check_for_n_messages):
+    log("Checking if there are " + str(number_of_messages_to_check_for) + " messages in the queue")
+    stats = queue_instance.stats()
+    log("There are " + str(stats['num']) + " messages in the queue and " + str(stats['in_flight']) + " messages in flight")
+    sys.exit(stats['num'] + stats['in_flight'] - number_of_messages_to_check_for)
+
 message = queue_instance.dequeue()
 
 if (message is None):

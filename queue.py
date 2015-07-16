@@ -30,6 +30,11 @@ class Queue(object):
 	def delete_message(self, message):
 		pass # abstract, implement your own
 
+	# returns queue statistics
+	@abstractmethod
+	def stats(self):
+		pass # abstract, implement your own
+
 class Message(object):
 	__metaclass__ = ABCMeta
 

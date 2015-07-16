@@ -40,6 +40,11 @@ class Queue(queue.Queue):
 	def delete_message(self, message):
 		os.remove(self.config["path"] + "/." + message.filename)
 
+	def stats(self):
+		messages = filter( lambda f: not f.startswith('.'), os.listdir(self.config["path"] + "/"))
+		in_flight = filter( lambda f: f.startswith('.'), os.listdir(self.config["path"] + "/"))
+		return {'num': len(messages), 'in_flight': len(in_flight)}
+
 class Message(queue.Message):
 	def __init__(self, queue, filename, content):
 		super(Message, self).__init__(queue)

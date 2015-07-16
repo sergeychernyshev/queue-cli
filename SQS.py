@@ -26,7 +26,12 @@ class Queue(queue.Queue):
 		message.aws_message.change_visibility(0)
 
 	def delete_message(self, message):
-		self.aws_queue.delete_message(message.aws_message)	
+		self.aws_queue.delete_message(message.aws_message)
+
+	def stats(self):
+		sqs_atts = self.aws_queue.get_attributes()
+		return {'num': int(sqs_atts['ApproximateNumberOfMessages']),
+			'in_flight': int(sqs_atts['ApproximateNumberOfMessagesNotVisible'])}
 
 class Message(queue.Message):
 	def __init__(self, queue, aws_message):
