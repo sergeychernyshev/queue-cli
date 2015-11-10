@@ -14,6 +14,18 @@ Running command.sh for every message (daemonized) as they become available in qu
 dequeue -d queue1 command.sh arg1 arg2
 ```
 
+Checking if queue has `n` number of messages (both queued and in-flight)
+
+```Bash
+dequeue -n 25 queue1
+```
+
+Checking if queue has no messages in it
+
+```Bash
+dequeue -n 25
+```
+
 Enqueue basic message into queue2
 ```Bash
 echo "Awesome" | enqueue queue2
