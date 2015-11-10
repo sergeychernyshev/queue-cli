@@ -20,12 +20,6 @@ Checking if queue has `n` number of messages (both queued and in-flight)
 dequeue -n 25 queue1
 ```
 
-Checking if queue has no messages in it
-
-```Bash
-dequeue -n 25
-```
-
 Enqueue basic message into queue2
 ```Bash
 echo "Awesome" | enqueue queue2
